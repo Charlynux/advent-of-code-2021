@@ -71,13 +71,13 @@
 
 (draw-number 1 (prepare-boards (read-boards (split-boards (cddr day4-example)))))
 
-(defun check-winner (boards)
-  (car (remove-if
-        (lambda (board) (not (remove-if #'identity board)))
-        boards)))
+(defun check-winners (boards)
+  (remove-if
+   (lambda (board) (not (remove-if #'identity board)))
+   boards))
 
-(check-winner '(((1 3) (2 4)) (() (3 4))))
-(check-winner '(((1 3) (2 4)) ((5 6) (3 4))))
+(check-winners '(((1 3) (2 4)) (() (3 4))))
+(check-winners '(((1 3) (2 4)) ((5 6) (3 4))))
 
 (defun sum-remaining (winning-board)
   (reduce #'+
@@ -89,7 +89,7 @@
 (defun bingo-recursion (numbers boards)
   (when numbers
     (let ((updated-boards (draw-number (car numbers) boards)))
-      (let ((winner (check-winner updated-boards)))
+      (let ((winner (car (check-winners updated-boards))))
         (print winner)
         (if winner
             (* (car numbers) (sum-remaining winner))
@@ -103,3 +103,28 @@
 (day4-part1 day4-example)
 ;; 4512
 (day4-part1 day4-input)
+;; 71708
+
+(defun losing-recursion (numbers boards)
+  (if numbers
+    (let ((updated-boards (draw-number (car numbers) boards)))
+      (let ((winners (check-winners updated-boards)))
+        (let ((remaining-boards
+                (reduce
+                 (lambda (current-boards winner) (remove-if (lambda (board) (equal board winner)) current-boards))
+                 winners
+                 :initial-value updated-boards)))
+          (if remaining-boards
+              (losing-recursion (cdr numbers) remaining-boards)
+              (* (car numbers) (sum-remaining (car winners)))))))
+    :no-more-numbers))
+
+(defun day4-part2 (input)
+  (let ((numbers (parse-drawn-numbers input))
+        (boards (prepare-boards (read-boards (split-boards (cddr input))))))
+    (losing-recursion numbers boards)))
+
+(day4-part2 day4-example)
+;; 1924
+(day4-part2 day4-input)
+;; 71708
