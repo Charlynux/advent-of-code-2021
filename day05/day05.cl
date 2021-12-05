@@ -28,22 +28,54 @@
 
 ;; An entry like 1,1 -> 1,3 covers points 1,1, 1,2, and 1,3
 ;; !!! For now, only consider horizontal and vertical lines: lines where either x1 = x2 or y1 = y2. !!!
+(defun straight-linep (line)
+  (destructuring-bind ((x1 . y1) . (x2 . y2)) line
+    (or (= x1 x2) (= y1 y2))))
+
+(defun diagonal-direction (start end)
+  (destructuring-bind ((x1 . y1) . (x2 . y2)) (cons start end)
+    (cons (/ (- x2 x1) (abs (- x2 x1)))
+          (/ (- y2 y1) (abs (- y2 y1))))))
+(diagonal-direction (cons 1 1) (cons 3 3))
+(diagonal-direction (cons 9 7) (cons 7 9))
+
+(defun move (point direction)
+  (destructuring-bind ((x . y) . (offset-x . offset-y)) (cons point direction)
+    (cons (+ x offset-x)
+          (+ y offset-y))))
+
+(defun construct-diagonal (start end direction)
+  (when (not (equal start end))
+    (let ((next (move start direction)))
+      (cons
+       next
+       (construct-diagonal next end direction)))))
+
+(defun construct-full-diagonal (start end)
+  (cons start
+        (construct-diagonal start end (diagonal-direction start end))))
+
+(construct-full-diagonal (cons 1 1) (cons 3 3))
+(construct-full-diagonal (cons 9 7) (cons 7 9))
+
 (defun keep-straight-lines (lines)
   (remove-if
-   (lambda (line)
-     (destructuring-bind ((x1 . y1) . (x2 . y2)) line
-       (and (not (= x1 x2)) (not (= y1 y2)))))
+   (lambda (line) (not (straight-linep line)))
    lines))
 
 ;; Solution :
 ;; the number of points where at least two lines overlap
 
 (defun expand-line (line)
-  (destructuring-bind ((x1 . y1) . (x2 . y2)) line
-    (loop for x from (min x1 x2) to (max x1 x2)
-          append (loop for y from (min y1 y2) to (max y1 y2)
-                       collect (cons x y)))))
+  (if (straight-linep line)
+      (destructuring-bind ((x1 . y1) . (x2 . y2)) line
+        (loop for x from (min x1 x2) to (max x1 x2)
+              append (loop for y from (min y1 y2) to (max y1 y2)
+                           collect (cons x y))))
+      (destructuring-bind (start . end) line
+        (construct-full-diagonal start end))))
 (expand-line (parse-line "0,1 -> 0,3"))
+(expand-line (parse-line "1,1 -> 3,3"))
 
 (defun occurrences (lst)
   (let ((table (make-hash-table :test #'equal)))
@@ -66,3 +98,12 @@
 
 (day5-part1 day5-example)
 (day5-part1 day5-input)
+
+;; Part 2 : you need to also consider diagonal lines
+(defun day5-part2 (input)
+  (let ((lines (mapcar #'parse-line input)))
+    (let ((occs (occurrences (mapcan #'expand-line lines))))
+      (count-over-one occs))))
+
+(day5-part2 day5-example)
+(day5-part2 day5-input)
