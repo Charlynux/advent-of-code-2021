@@ -59,9 +59,7 @@
 (construct-full-diagonal (cons 9 7) (cons 7 9))
 
 (defun keep-straight-lines (lines)
-  (remove-if
-   (lambda (line) (not (straight-linep line)))
-   lines))
+  (remove-if-not #'straight-linep lines))
 
 ;; Solution :
 ;; the number of points where at least two lines overlap
