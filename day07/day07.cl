@@ -33,3 +33,20 @@
 
 (part1-solution day7-example)
 (part1-solution day7-input)
+
+
+(defun part2-cost (n pos)
+  (let ((cost (abs (- n pos))))
+    (/ (* cost (1+ cost)) 2)))
+
+(defun movement-cost-2 (ns position)
+  (reduce #'+ (mapcar (lambda (n) (part2-cost n position)) ns)))
+
+(defun part2-solution (input)
+  (let ((max-position
+          (car (sort (remove-duplicates input) #'>))))
+    (reduce #'min (loop for i from 1 to max-position
+                        collect (movement-cost-2 input i)))))
+
+(part2-solution day7-example)
+(print (part2-solution day7-input))
