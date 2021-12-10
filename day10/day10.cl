@@ -10,18 +10,23 @@
         (cons #\) 3)
         (cons #\] 57)))
 
-(defun recur-line-part1 (pile characters)
+(defun recur-line-generic (pile characters)
   (if (null characters)
-      0
+      (list (cons :pile pile))
       (let ((c (car characters)))
         (if (assoc c *corresponding-open*)
             ;; closing
             (let ((top (car pile)))
               (if (equal top (cdr (assoc c *corresponding-open*)))
-                  (recur-line-part1 (cdr pile) (cdr characters))
-                  (cdr (assoc c *corrupted-score*))))
+                  (recur-line-generic (cdr pile) (cdr characters))
+                  (list (cons :corrupted (cdr (assoc c *corrupted-score*))))))
             ;; opening
-            (recur-line-part1 (cons c pile) (cdr characters))))))
+            (recur-line-generic (cons c pile) (cdr characters))))))
+
+(defun solve-line-part1 (characters)
+  (if (assoc :corrupted (recur-line-generic nil characters))
+      (cdr (assoc :corrupted (recur-line-generic nil characters)))
+      0))
 
 (recur-line-part1 nil (coerce "{([(<{}[<>[]}>{[]{[(<()>" 'list))
 
@@ -30,7 +35,7 @@
    #'+
    (mapcar
     (lambda (line)
-      (recur-line-part1 nil (coerce line 'list)))
+      (solve-line-part1 (coerce line 'list)))
     lines)))
 
 (defparameter *day10-example*
