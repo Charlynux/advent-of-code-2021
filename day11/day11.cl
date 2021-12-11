@@ -54,14 +54,51 @@
 
 (set-difference (list (cons 1 1)) (list (cons 1 1) (cons 2 1)) :test #'equal)
 
+(defparameter *all-neighbors*
+  (loop for y from -1 to 1
+        append (loop for x from -1 to 1
+                     when (not (and (zerop x) (zerop y)))
+                     collect (cons x y))))
+
+(defun move (coord offset)
+  (cons
+   (+ (car coord) (car offset))
+   (+ (cdr coord) (cdr offset))))
+
+(equal
+ (cons 0 1)
+ (cons 0 1))
+
+(defun increase-neighbors (flashes octopuses)
+  (let* ((neighbors (mapcan
+                    (lambda (coord) (mapcar
+                                     (lambda (offset) (move coord offset))
+                                     *all-neighbors*))
+                    flashes))
+        (to-increase
+          ;; ici le problème est que l'association list s'appuie sur eq et non equal
+          ;; je dois donc toujours utiliser les coordonnées issues de *coords*
+          (loop for coord in *coords*
+                append (loop for neighbor in neighbors
+                             when (equal coord neighbor)
+                               collect coord))))
+    (reduce
+     (lambda (octopuses coord)
+       (acons coord
+              (1+ (cdr (assoc coord octopuses)))
+              octopuses))
+     to-increase
+     :initial-value octopuses)))
+
+(print (increase-neighbors (list (car *coords*)) day11-example))
+
 (defun recur-flashes (flashes octopuses)
   (let* ((new-flashes (loop for coord in *coords*
                             when (and (< 9 (cdr (assoc coord octopuses)))
-                                      (set-difference '(coord) flashes))
+                                      (set-difference (list coord) flashes))
                               collect coord)))
     (if new-flashes
         (recur-flashes (union flashes new-flashes)
-                       ;; TODO : implement increase neighbors
                        (increase-neighbors new-flashes octopuses))
         (values octopuses flashes))))
 
@@ -86,10 +123,10 @@
   (multiple-value-bind (updated-octopuses flashes)
       (recur-flashes nil (increase-all octopuses))
     (values
-     (reset-flashes octopuses)
+     (reset-flashes updated-octopuses)
      (length flashes))))
 
-(day11-step day11-example)
+(day11-step (day11-step day11-example))
 
 (defun day11-part1 (octopuses nb-flashes steps)
   (if (zerop steps)
@@ -100,4 +137,8 @@
                      (+ nb-flashes nb-new-flashes)
                      (1- steps)))))
 
-(day11-part1 day11-example 0 1)
+(identity (day11-part1 day11-example 0 10))
+
+(identity (day11-part1 day11-example 0 100))
+
+(identity (day11-part1 day11-input 0 100))
