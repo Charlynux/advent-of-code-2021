@@ -142,3 +142,14 @@
 (identity (day11-part1 day11-example 0 100))
 
 (identity (day11-part1 day11-input 0 100))
+
+(defun day11-part2 (octopuses steps)
+  (multiple-value-bind (updated-octopuses nb-flashes)
+      (day11-step octopuses)
+    (if (= 100 nb-flashes)
+        (values steps updated-octopuses)
+        (day11-part2 updated-octopuses (1+ steps)))))
+
+(identity (day11-part2 day11-example 1))
+
+(identity (day11-part2 day11-input 1))
