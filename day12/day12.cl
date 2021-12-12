@@ -238,4 +238,4 @@ start-RW")
 
 (day12-part2 day12-slightly-larger-example)
 
-(day12-part2 day12-input)
+(print (day12-part2 day12-input))
