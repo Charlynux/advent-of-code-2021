@@ -71,3 +71,72 @@
  (uiop:read-file-lines "~/git-repositories/advent-of-code-2021/day09/input"))
 
 (day9-part1 day9-input)
+
+(defun in-bounds (dimensions pos)
+  (and (<= 0 (car pos) (1- (car dimensions)))
+       (<= 0 (cdr pos) (1- (cadr dimensions)))))
+
+(defun find-neighbors (array coord closed)
+  (let ((dimensions (array-dimensions array))
+        (value (get-pos coord array)))
+    (loop for neighbor-offset in *neighbors*
+          for neighbor = (move coord neighbor-offset)
+          when (and (in-bounds dimensions neighbor)
+                    (not (= 9 (get-pos neighbor array)))
+                    (<= value (get-pos neighbor array))
+                    (set-difference (list (sxhash neighbor)) closed))
+            collect neighbor)))
+
+(defun expand-basin (array open closed)
+  (let ((next (remove-duplicates
+               (mapcan (lambda (coord) (find-neighbors array coord closed)) open)
+               :test #'equal)))
+    (if next
+        (expand-basin array
+                      next
+                      (union
+                       (mapcar #'sxhash next)
+                       closed))
+        closed)))
+
+
+(defun day9-part2 (input)
+  (let* ((array (day9-parse-lines input))
+         (dimensions (array-dimensions array))
+         (local-mins (loop for x from 0 to (1- (car dimensions))
+                           append (loop for y from 0 to (1- (cadr dimensions))
+                                        collect (keep-if-min-local (cons x y) array))))
+         (local-mins-coords (mapcar #'car (remove-if #'null local-mins)))
+         (sizes (mapcar #'length
+                        (mapcar
+                         (lambda (coord) (expand-basin array
+                                                       (list coord)
+                                                       (list (sxhash coord))))
+                         local-mins-coords))))
+    (print sizes)
+    (apply #'* (subseq (sort sizes #'>) 0 3))))
+
+(day9-part2 '("2199943210"
+              "3987894921"
+              "9856789892"
+              "8767896789"
+              "9899965678"))
+
+(print (day9-part2 day9-input))
+;; First try 485760 ;; too-low
+
+;; (= 1 diff) -> (<= diff 1)
+;; Second try 790830 ;; too-low
+
+;; Misunderstood the rule.
+;; It's simply (<= current-point neighbor), no "by 1" difference
+;; Third try : 916688 SUCCESS
+
+(let* ((dimensions (array-dimensions (day9-parse-lines day9-input)))
+       (hashes (loop for x from 0 to (car dimensions)
+                     append (loop for y from 0 to (cadr dimensions)
+                                  collect (sxhash (cons x y))))))
+  (-
+   (length hashes)
+   (length (remove-duplicates hashes))))
+;; 0, donc a priori pas de collisions dans les hashes
