@@ -33,3 +33,31 @@
 
 (length day6-example)
 ;; 5
+
+;; "Synchronisation"
+(=
+ (length (days-loop '(8) 21))
+ (length (days-loop '(5) 18))
+ (length (days-loop '(0) 13)))
+
+(defun memoizable-solution (steps)
+  (if (zerop steps)
+      1
+      (+
+       (memoizable-solution (max (- steps (1+ 6)) 0))
+       (memoizable-solution (max (- steps (1+ 8)) 0)))))
+
+(memoizable-solution 13)
+(= (length (days-loop '(0) 80))
+   (memoizable-solution 80))
+
+(let ((cache (make-hash-table)))
+  (defun cached-solution (steps)
+    (if (gethash steps cache)
+        (gethash steps cache)
+        (let ((solution (memoizable-solution steps)))
+          (setf (gethash steps cache) solution)
+          solution))))
+
+(print (cached-solution 256))
+;; LOOOOONG -> 6703087164
