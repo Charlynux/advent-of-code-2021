@@ -142,3 +142,100 @@ ql-sb
 end-wv")
 
 (day12-part1 day12-input)
+
+(defun already-small-twice (closed current)
+  (or
+   (remove-if
+    (lambda (pair) (= 1 (cdr pair)))
+    (reduce
+     (lambda (acc cave)
+       (let ((count (or (cdr (assoc cave acc)) 0)))
+         (acons cave (1+ count) acc)))
+     (remove-if-not #'small-cavep current)
+     :initial-value nil))
+   ;; Si une petite cave est dans la liste des visitées, mais pas dans les closeds, alors on a déjà prévu de la visiter une deuxième fois.
+   (set-difference
+    (remove-if-not #'small-cavep current)
+    (remove-if-not #'small-cavep closed))))
+
+(already-small-twice (list :|b|) (list :|a| :B :|b|))
+
+(already-small-twice (list :|a| :|b|) (list :|a| :B :|b|))
+
+(defun visit-one-small-cave-twice (paths start closed current)
+  (if (eq start *end-point*)
+      (list current)
+      (let* ((next (set-difference
+                    (cdr (assoc start paths))
+                    closed)))
+        (if next
+            (mapcan (lambda (next-start)
+                      (append
+                       (when (small-cavep next-start)
+                         (visit-one-small-cave-twice
+                          paths
+                          next-start
+                          (cons next-start closed)
+                          (cons next-start current)))
+                       (when (or (not (small-cavep next-start))
+                                 (not (already-small-twice closed current)))
+                         (visit-one-small-cave-twice
+                          paths
+                          next-start
+                          closed
+                          (cons next-start current)))))
+                    next)
+            (list current)))))
+
+
+
+(defun remove-duplicates-paths (paths)
+  (let ((contains (lambda (acc path)
+                    (reduce (lambda (found already-seen-path)
+                              (or found
+                                  (equal already-seen-path path)))
+                            acc :initial-value nil))))
+    (reduce
+     (lambda (acc path)
+       (if (funcall contains acc path)
+           acc
+           (cons path acc)))
+     paths
+     :initial-value nil)))
+
+(remove-duplicates-paths (list (list :a :b :c) (list :a :b) (list :a :b :c) (list :a)))
+
+(defun day12-part2 (input)
+  (length
+   (remove-duplicates-paths
+    (remove-if-not #'finishedp
+                   (visit-one-small-cave-twice (day12-parse input)
+                                               *start-point*
+                                               (list *start-point*)
+                                               (list *start-point*))))))
+
+(day12-part2 day12-larger-example)
+
+(defvar day12-slightly-larger-example
+  "fs-end
+he-DX
+fs-he
+start-DX
+pj-DX
+end-zg
+zg-sl
+zg-pj
+pj-he
+RW-he
+fs-DX
+pj-RW
+zg-RW
+start-pj
+he-WI
+zg-he
+pj-fs
+start-RW")
+
+(day12-part2 day12-slightly-larger-example)
+
+(day12-part2 day12-input)
