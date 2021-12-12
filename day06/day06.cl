@@ -61,3 +61,38 @@
 
 (print (cached-solution 256))
 ;; LOOOOONG -> 6703087164
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; DYNAMIC PROGRAMMING !!!!!!!
+;;
+;; https://www.educative.io/courses/grokking-dynamic-programming-patterns-for-coding-interviews/m2G1pAq0OO0#Characteristics-of-Dynamic-Programming
+;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+
+;; f(n) = f(n - 7) + f(n - 9)
+
+(defun dynamic-solution (steps)
+  (let ((dp (make-hash-table)))
+    ;; On pré-remplit les premières valeurs avec l'algo de base
+    (loop for n from 0 to 9
+          do (setf (gethash n dp)
+                   (memoizable-solution n)))
+
+    (loop for n from 10 to steps
+          do (setf (gethash n dp)
+                   (+ (gethash (max (- n (1+ 6)) 0) dp)
+                      (gethash (max (- n (1+ 8)) 0) dp))))
+    (gethash steps dp)))
+
+
+(dynamic-solution 256) ;; quasi-instant
+
+(defun day6-part2 (input steps)
+  (reduce
+   #'+
+   (mapcar (lambda (n) (dynamic-solution (- steps n))) input )))
+
+
+(day6-part2 day6-example 256)
+(print (day6-part2 day6-input 256))
