@@ -206,13 +206,14 @@ end-wv")
 (remove-duplicates-paths (list (list :a :b :c) (list :a :b) (list :a :b :c) (list :a)))
 
 (defun day12-part2 (input)
-  (length
-   (remove-duplicates-paths
-    (remove-if-not #'finishedp
-                   (visit-one-small-cave-twice (day12-parse input)
-                                               *start-point*
-                                               (list *start-point*)
-                                               (list *start-point*))))))
+  (let ((all-paths (remove-if-not #'finishedp
+                                  (visit-one-small-cave-twice (day12-parse input)
+                                                              *start-point*
+                                                              (list *start-point*)
+                                                              (list *start-point*)))))
+    (print "Calcul terminé ! On retire les doublons...")
+    (length
+     (remove-duplicates-paths all-paths))))
 
 (day12-part2 day12-larger-example)
 
@@ -239,3 +240,52 @@ start-RW")
 (day12-part2 day12-slightly-larger-example)
 
 (print (day12-part2 day12-input))
+
+;; Le temps de traitement est dû à la suppression des doublons !!!
+
+;; Ces doublons viennent des branches créées pour les "petites caves".
+;; Si dans une branche prévue pour visiter deux fois une cave,
+;; on ne la visite qu'une fois, on crée un doublon avec la branche où
+;; l'on a mis cette cave en "closed".
+
+;; La solution consiste à abandonner ces routes.
+;; Pour cela, lorsqu'on arrive à "end" on vérifie que toutes les petites caves sont "closed".
+
+(defun better-visit-one-small-cave-twice (paths start closed current)
+  (if (eq start *end-point*)
+      (when (null (set-difference
+                  (remove-if-not #'small-cavep current)
+                  (remove-if-not #'small-cavep closed)))
+       (list current))
+      (let* ((next (set-difference
+                    (cdr (assoc start paths))
+                    closed)))
+        (if next
+            (mapcan (lambda (next-start)
+                      (append
+                       (when (small-cavep next-start)
+                         (better-visit-one-small-cave-twice
+                          paths
+                          next-start
+                          (cons next-start closed)
+                          (cons next-start current)))
+                       (when (or (not (small-cavep next-start))
+                                 (not (already-small-twice closed current)))
+                         (better-visit-one-small-cave-twice
+                          paths
+                          next-start
+                          closed
+                          (cons next-start current)))))
+                    next)
+            (list current)))))
+
+(defun better-day12-part2 (input)
+  (length
+   (remove-if-not #'finishedp
+                  (better-visit-one-small-cave-twice (day12-parse input)
+                                                     *start-point*
+                                                     (list *start-point*)
+                                                     (list *start-point*)))))
+
+(better-day12-part2 day12-larger-example)
+(better-day12-part2 day12-input)
