@@ -85,3 +85,19 @@
 
 (day13-part1 "~/git-repositories/advent-of-code-2021/day13/example")
 (day13-part1 "~/git-repositories/advent-of-code-2021/day13/input")
+
+(defun day13-part2 (file)
+  (let* ((input (read-input file))
+         (result (reduce
+                  #'folding-step
+                  (cdr input)
+                  :initial-value (list->set (car input))))
+         (max-x (apply #'max (mapcar #'car (fset:convert 'list result))))
+         (max-y (apply #'max (mapcar #'cdr (fset:convert 'list result)))))
+    (loop for y from 0 to max-y
+          do (loop for x from 0 to max-x
+                  do (princ (if (fset:contains? result (cons x y)) "#" ".")))
+          do (princ #\NewLine))))
+
+(day13-part2 "~/git-repositories/advent-of-code-2021/day13/example")
+(day13-part2 "~/git-repositories/advent-of-code-2021/day13/input")
