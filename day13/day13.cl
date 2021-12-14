@@ -96,7 +96,7 @@
          (max-y (apply #'max (mapcar #'cdr (fset:convert 'list result)))))
     (loop for y from 0 to max-y
           do (loop for x from 0 to max-x
-                  do (princ (if (fset:contains? result (cons x y)) "#" ".")))
+                  do (princ (if (fset:contains? result (cons x y)) "#" " ")))
           do (princ #\NewLine))))
 
 (day13-part2 "~/git-repositories/advent-of-code-2021/day13/example")
