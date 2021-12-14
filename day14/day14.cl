@@ -76,10 +76,13 @@
     (list (car sorted)
           (car(last sorted)))))
 
-(defun day14-part2 (input)
+(defun day14-generic (input steps)
   (let ((resulting-word (destructuring-bind (word . rules) (day14-parse input)
-                          (day14-recuring-step word rules 10))))
+                          (day14-recuring-step word rules steps))))
     (apply #'- (max-and-min (occurrences resulting-word)))))
 
-(day14-part2 "~/git-repositories/advent-of-code-2021/day14/example")
-(day14-part2 "~/git-repositories/advent-of-code-2021/day14/input")
+(defun day14-part1 (input)
+  (day14-generic input 10))
+
+(day14-part1 "~/git-repositories/advent-of-code-2021/day14/example")
+(day14-part1 "~/git-repositories/advent-of-code-2021/day14/input")
