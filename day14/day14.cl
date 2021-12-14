@@ -1,3 +1,4 @@
+(ql:quickload "cl-ppcre")
 (loop for (a b) on (coerce "NNCB" 'list)
       nconcing (list a b))
 ;; if match then a + match else a
@@ -26,7 +27,6 @@
 (day14-step (coerce "NNCB" 'list) test-tree)
 
 ;; TODO : PARSING
-
 (defun parse-insertion-rule (line)
   (ppcre:register-groups-bind (pattern insert)
       ("([A-Z][A-Z]) -> ([A-Z])" line :sharedp t)
@@ -86,3 +86,70 @@
 
 (day14-part1 "~/git-repositories/advent-of-code-2021/day14/example")
 (day14-part1 "~/git-repositories/advent-of-code-2021/day14/input")
+
+(defun merge+ (as bs)
+  (let ((a-keys (mapcar #'car as))
+        (b-keys (mapcar #'car bs)))
+    (reduce
+     (lambda (acc k)
+       (acons k (+ (or (cdr (assoc k as)) 0)
+                   (or (cdr (assoc k bs)) 0))
+              acc))
+     (union a-keys b-keys)
+     :initial-value nil)))
+
+(merge+ (list (cons #\A 10) (cons #\C 2)) (list (cons #\C 3) (cons #\B 5)))
+
+(defun expand-pair (rules steps a b)
+  (let ((insert (find-rule rules a b)))
+    (if (or (zerop steps)
+            (null insert))
+        (list (cons a 1))
+        (merge+
+         (expand-pair rules (1- steps) a insert)
+         (expand-pair rules (1- steps) insert b)))))
+
+(expand-pair
+ (cdr (day14-parse "~/git-repositories/advent-of-code-2021/day14/example"))
+ 0
+ #\N #\N)
+
+(expand-pair
+ (cdr (day14-parse "~/git-repositories/advent-of-code-2021/day14/example"))
+ 10
+ #\N #\N)
+
+;; Taken from StackOverflow post which take it from "On Lisp" book
+(defun memoize (fn)
+  (let ((cache (make-hash-table :test #'equal)))
+    #'(lambda (&rest args)
+        (multiple-value-bind
+              (result exists)
+            (gethash args cache)
+          (if exists
+              result
+              (setf (gethash args cache)
+                    (apply fn args)))))))
+
+(setf (fdefinition 'expand-pair) (memoize #'expand-pair))
+
+(expand-pair
+ (cdr (day14-parse "~/git-repositories/advent-of-code-2021/day14/example"))
+ 40
+ #\N #\N)
+
+(defun expand-optimized (word rules steps)
+  (reduce
+   #'merge+ (loop for (a b) on word
+                 collect (if b
+                             (expand-pair rules steps a b)
+                             (list (cons a 1))))))
+
+(defun day14-part2 (input)
+  (let ((resulting-occurences
+          (destructuring-bind (word . rules) (day14-parse input)
+            (expand-optimized word rules 40))))
+    (apply #'- (max-and-min resulting-occurences))))
+
+(day14-part2 "~/git-repositories/advent-of-code-2021/day14/example")
+(print (day14-part2 "~/git-repositories/advent-of-code-2021/day14/input"))
