@@ -130,3 +130,50 @@
 (day15-part1
  (day9-parse-lines
   (uiop:read-file-lines "~/git-repositories/advent-of-code-2021/day15/input")))
+
+(defun increment (i) (lambda (n) (if (< (+ n i) 10)
+                                     (+ n i)
+                                     (- (+ n i) 9))))
+
+(defun extend-horizontally (lines)
+  (loop for line in lines
+        collect (loop for i from 0 to 4
+                      nconcing (mapcar
+                                (increment i)
+                                line))))
+
+(defun create-full-map (lines)
+  (let ((horizontal (extend-horizontally lines)))
+    (loop for i from 0 to 4
+          append (loop for line in horizontal
+                       collect (mapcar (increment i) line)))))
+
+(defun day15-parse (lines)
+  (mapcar (lambda (line)
+            (mapcar #'char->int (coerce line 'list)))
+          lines))
+
+(day15-part1
+ (list-to-2d-array
+  (create-full-map
+   (day15-parse
+    (uiop:split-string
+     "1163751742
+1381373672
+2136511328
+3694931569
+7463417111
+1319128137
+1359912421
+3125421639
+1293138521
+2311944581"
+     :separator '(#\Newline))))))
+
+(defvar input-full-map
+  (list-to-2d-array
+   (create-full-map
+    (day15-parse
+     (uiop:read-file-lines "~/git-repositories/advent-of-code-2021/day15/input")))))
+
+(print (day15-part1 input-full-map))
