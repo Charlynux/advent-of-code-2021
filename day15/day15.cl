@@ -69,31 +69,30 @@
   (lambda (pos) (and (<= 0 (car pos) (1- (car dimensions)))
                      (<= 0 (cdr pos) (1- (cadr dimensions))))))
 
+(defun compare-points (apoint bpoint)
+  (< (cadr apoint) (cadr bpoint)))
 
 (defun not-closed-and-not-best-open (open closed)
-  (lambda (xs)
-    (let ((pos (car xs)))
-      (or (fset:lookup closed pos)
-          (let ((from-open (fset:lookup open pos)))
-            (and from-open
-                 (< (cadr from-open)
-                    (cadr xs))))))))
+  (fset:lookup closed pos))
 
 (defun calculate-point-definition (array current goal)
   (lambda (pos)
     (let ((pos-risk (+ (caddr current) (get-pos pos array))))
-      (list pos (+ pos-risk (manhattan-distance pos goal)) pos-risk))))
+      (list pos (+ pos-risk
+                   (manhattan-distance pos goal)) pos-risk))))
 
 (defun add-to-open (open points)
-  (reduce
-   (lambda (acc point)
-     (fset:with acc (car point) point))
-   points
-   :initial-value open))
-
-(defun find-best-candidate (open)
-  (fset:first (fset:sort (fset:range open) (lambda (apoint bpoint)
-                                      (<= (cadr apoint) (cadr bpoint))))))
+  (labels ((insert (open points)
+             (if (null points)
+                 open
+                 (if (null open)
+                     points
+                     (if (compare-points (car open) (car points))
+                         (cons (car open)
+                               (insert (cdr open) points))
+                         (cons (car points)
+                               (insert open (cdr points))))))))
+    (insert open (sort points #'compare-points))))
 
 (ql:quickload "fset")
 
@@ -105,8 +104,8 @@
                                       (mapcar
                                        (lambda (offset) (move pos offset))
                                        *neighbors*)))))
-  (labels ((recursion-step (open closed)
-             (let ((current (find-best-candidate open)))
+    (labels ((recursion-step (open closed)
+               (let ((current (car open)))
                (if (or (null current) (equal (car current) goal))
                    current
                    (let ((next-open (remove-if
@@ -116,13 +115,13 @@
                                       (funcall find-neighbors (car current))))))
                      (recursion-step
                       (add-to-open
-                       (fset:less open (car current))
+                       (cdr open)
                        next-open)
                       (fset:with
                        closed
                        (car current)
                        current)))))))
-    (cadr (recursion-step (fset:map ((cons 0 0) (list (cons 0 0) 0 0)))
+      (cadr (recursion-step (list (list (cons 0 0) 0 0))
                          (fset:map))))))
 
 (day15-part1 example-data)
