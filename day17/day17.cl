@@ -63,7 +63,7 @@
 
 (defun find-paths (target)
   (loop for offset-x from 0 to (cdar target)
-        append (loop for offset-y from 0 to 200
+        append (loop for offset-y from (cadr target) to 200
                      for offset = (cons offset-x offset-y)
                      for result = (day17-step target
                                               *start-point*
@@ -79,3 +79,7 @@
 (day17-part1 *day17-example*)
 
 (day17-part1 *day17-input*)
+
+(length (find-paths *day17-example*))
+
+(length (find-paths *day17-input*))
