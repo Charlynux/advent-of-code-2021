@@ -135,4 +135,43 @@ F = 1111"
 (= (day16-part1 "A0016C880162017C3686B18A3D4780")
    31)
 
-(day16-part1 (uiop:read-file-line "~/git-repositories/advent-of-code-2021/day16/input"))
+(defvar day16-input
+  (uiop:read-file-line "~/git-repositories/advent-of-code-2021/day16/input"))
+
+(day16-part1 day16-input)
+
+
+(defun packet-value (packet)
+  (case (cdar packet)
+    (4 (cadr packet))
+    (0 (reduce
+        #'+
+        (mapcar #'packet-value (cdr packet))))
+    (1 (reduce
+        #'*
+        (mapcar #'packet-value (cdr packet))))
+    (2 (reduce
+        #'min
+        (mapcar #'packet-value (cdr packet))))
+    (3 (reduce
+        #'max
+        (mapcar #'packet-value (cdr packet))))
+    (5 (destructuring-bind
+           (a b)
+           (mapcar #'packet-value (cdr packet))
+         (if (< b a) 1 0)))
+    (6 (destructuring-bind
+           (a b)
+           (mapcar #'packet-value (cdr packet))
+         (if (< a b) 1 0)))
+    (7 (destructuring-bind
+           (a b)
+           (mapcar #'packet-value (cdr packet))
+         (if (= a b) 1 0)))))
+
+(defun day16-part2 (input)
+  (packet-value (read-packet (hex-to-binary input))))
+
+(day16-part2 "D2FE28")
+(day16-part2 "C200B40A82D2FE28")
+(print(day16-part2 day16-input))
