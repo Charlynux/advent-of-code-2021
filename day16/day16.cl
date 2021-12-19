@@ -142,32 +142,25 @@ F = 1111"
 
 
 (defun packet-value (packet)
-  (case (cdar packet)
-    (4 (cadr packet))
-    (0 (reduce
-        #'+
-        (mapcar #'packet-value (cdr packet))))
-    (1 (reduce
-        #'*
-        (mapcar #'packet-value (cdr packet))))
-    (2 (reduce
-        #'min
-        (mapcar #'packet-value (cdr packet))))
-    (3 (reduce
-        #'max
-        (mapcar #'packet-value (cdr packet))))
-    (5 (destructuring-bind
-           (a b)
-           (mapcar #'packet-value (cdr packet))
-         (if (< b a) 1 0)))
-    (6 (destructuring-bind
-           (a b)
-           (mapcar #'packet-value (cdr packet))
-         (if (< a b) 1 0)))
-    (7 (destructuring-bind
-           (a b)
-           (mapcar #'packet-value (cdr packet))
-         (if (= a b) 1 0)))))
+  (labels
+      ((reduction (fn)
+         (reduce
+          fn
+          (mapcar #'packet-value (cdr packet))))
+       (compare (fn)
+         (destructuring-bind
+             (a b)
+             (mapcar #'packet-value (cdr packet))
+           (if (funcall fn b a) 1 0))))
+    (case (cdar packet)
+      (4 (cadr packet))
+      (0 (reduction #'+))
+      (1 (reduction #'*))
+      (2 (reduction #'min))
+      (3 (reduction #'max))
+      (5 (compare #'<))
+      (6 (compare #'>))
+      (7 (compare #'=)))))
 
 (defun day16-part2 (input)
   (packet-value (read-packet (hex-to-binary input))))
