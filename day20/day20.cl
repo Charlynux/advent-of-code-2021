@@ -36,11 +36,33 @@
    (parse-enhancement-algorithm (car input))
    (parse-image (cddr input))))
 
+(defun inner-box (image)
+  (let ((light-coords (loop for coord being the hash-keys of image
+                            when (= 1 (gethash coord image))
+                              collect coord)))
+    (cons
+     (cons
+      (reduce #'min (mapcar #'car light-coords))
+      (reduce #'min (mapcar #'cdr light-coords)))
+     (cons
+      (reduce #'max (mapcar #'car light-coords))
+      (reduce #'max (mapcar #'cdr light-coords))))))
+
+(inner-box (cdr (day20-parse day20-example)))
+
+(inner-box
+ (enhance
+  (car (day20-parse day20-example))
+  (cdr (day20-parse day20-example))))
+
 (defun debug-image (image)
-  (loop for y from -10 to 10
-        do (loop for x from -10 to 10
-                 do (princ (if (= 1 (or (gethash (cons x y) image) 0)) "#" ".")))
-        do (princ #\NewLine)))
+  (destructuring-bind
+      ((min-x . min-y) . (max-x . max-y))
+      (inner-box image)
+    (loop for y from (- min-y 2) to (+ max-y 2)
+          do (loop for x from (- min-x 2) to (+ max-x 2)
+                   do (princ (if (= 1 (or (gethash (cons x y) image) 0)) "#" ".")))
+          do (princ #\NewLine))))
 
 (debug-image (cdr (day20-parse day20-example)))
 
@@ -77,11 +99,12 @@
  (cons 5 10))
 
 (defun infinite-image-coords (image)
-  (remove-duplicates
-   (loop for coord being the hash-keys of image
-         append (loop for outer-coord in (square-around coord)
-                      nconcing (square-around outer-coord)))
-   :test 'equal))
+  (destructuring-bind
+      ((min-x . min-y) . (max-x . max-y))
+      (inner-box image)
+    (loop for x from (- min-x 2) to (+ max-x 2)
+          append (loop for y from (- min-y 2) to (+ max-y 2)
+                       collect (cons x y)))))
 
 (length (infinite-image-coords (cdr (day20-parse day20-example))))
 
@@ -99,7 +122,11 @@
 
 (aref
  (car (day20-parse day20-example))
- (parse-integer "111111111" :radix 2))
+ 511)
+
+(aref
+ (car (day20-parse day20-input))
+ 511)
 
 (defun count-lit-pixels (image)
   (loop for pixel being the hash-value in image
@@ -115,7 +142,9 @@
 (debug-image
  (enhance
   (car (day20-parse day20-example))
-  (cdr (day20-parse day20-example))))
+  (enhance
+   (car (day20-parse day20-example))
+          (cdr (day20-parse day20-example)))))
 
 (defun day20-part1 (input)
   (destructuring-bind (algorithm . image) input
@@ -124,5 +153,8 @@
 
 (day20-part1 (day20-parse day20-example))
 
+(debug-image (cdr (day20-parse day20-input)))
+
 (day20-part1 (day20-parse day20-input))
 ;; 5486 - too high
+;; 4942 - too high
