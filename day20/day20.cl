@@ -169,3 +169,20 @@
 (day20-part1 (day20-parse day20-input))
 ;; 5486 - too high
 ;; 4942 - too high
+
+(defun enhance-n (algorithm image n)
+  (if (zerop n)
+      image
+      (let ((intermediate (enhance algorithm image)))
+        (setf *default-value* (aref algorithm *default-value*))
+        (enhance-n algorithm intermediate (1- n)))))
+
+(defun day20-part2 (input)
+  (setf *default-value* 0)
+  (destructuring-bind (algorithm . image) input
+    (let ((resulting-image (enhance-n algorithm image 50)))
+      (count-lit-pixels resulting-image))))
+
+(day20-part2 (day20-parse day20-example))
+
+(day20-part2 (day20-parse day20-input))
