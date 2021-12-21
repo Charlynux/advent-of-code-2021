@@ -174,7 +174,9 @@
   (if (zerop n)
       image
       (let ((intermediate (enhance algorithm image)))
-        (setf *default-value* (aref algorithm *default-value*))
+        (setf *default-value* (aref algorithm (if (= 1 *default-value*)
+                                                  511
+                                                  0)))
         (enhance-n algorithm intermediate (1- n)))))
 
 (defun day20-part2 (input)
